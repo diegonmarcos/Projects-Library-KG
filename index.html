@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Saved collections</title>
+<style>
+:root{
+  --bg:#ffffff; --surface:#efefef; --surface-2:#e2e2e2; --text:#111111; --muted:#5f5f5f;
+  --red:#e60023; --red-hover:#ad081b; --overlay:rgba(0,0,0,.38); --modal-bg:#ffffff; --scrim:rgba(0,0,0,.72);
+  box-sizing:border-box; padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark; --bg:#121212; --surface:#2b2b2b; --surface-2:#3a3a3a; --text:#f1f1f1; --muted:#b0b0b0;
+    --modal-bg:#1e1e1e; --overlay:rgba(0,0,0,.45);
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark; --bg:#121212; --surface:#2b2b2b; --surface-2:#3a3a3a; --text:#f1f1f1; --muted:#b0b0b0;
+  --modal-bg:#1e1e1e; --overlay:rgba(0,0,0,.45);
+}
+*,*::before,*::after{box-sizing:border-box}
+html{height:100%;scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;height:100%;display:flex;flex-direction:column;overflow:hidden;background:var(--bg);color:var(--text);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
+button{font:inherit;color:inherit;cursor:pointer;border:0;background:none}
+:focus-visible{outline:3px solid #0074e8;outline-offset:2px;border-radius:12px}
+
+header{position:relative;flex:none;z-index:9;background:var(--bg);padding:12px 16px 4px}
+.bar{display:flex;align-items:center;gap:8px}
+.logo{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;flex:none}
+.logo span{width:28px;height:28px;border-radius:50%;background:var(--red);color:#fff;display:grid;place-items:center;font-weight:800;font-size:17px;font-family:Georgia,serif}
+.navpill{padding:12px 16px;border-radius:24px;font-weight:600;font-size:16px;white-space:nowrap}
+.navpill[aria-pressed="true"]{background:var(--text);color:var(--bg)}
+.search{flex:1;display:flex;align-items:center;gap:8px;background:var(--surface);border-radius:24px;padding:0 16px;height:48px;min-width:0}
+.search:focus-within{box-shadow:0 0 0 4px rgba(0,116,232,.35)}
+.search svg{flex:none;color:var(--muted)}
+.search input{flex:1;min-width:0;border:0;background:transparent;color:var(--text);font-size:16px;outline:none}
+.avatar{width:40px;height:40px;border-radius:50%;background:#2f6f5e;color:#fff;display:grid;place-items:center;font-weight:700;flex:none}
+.chips{display:flex;gap:8px;overflow-x:auto;padding:12px 0 8px;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chip{flex:none;padding:10px 16px;border-radius:16px;background:var(--surface);font-weight:600;font-size:14px;white-space:nowrap}
+.chip:hover{background:var(--surface-2)}
+.chip[aria-pressed="true"]{background:var(--text);color:var(--bg)}
+
+main{padding:8px 12px 96px;height:100%;min-height:0;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
+.intro{padding:4px 4px 12px;color:var(--muted);font-size:14px}
+.grid{column-width:236px;column-gap:16px;max-width:1800px;margin:0 auto}
+@media (max-width:600px){.grid{column-count:2;column-width:auto;column-gap:10px}}
+
+.pin{break-inside:avoid;margin-bottom:20px;display:block;width:100%;text-align:left}
+.cover{position:relative;border-radius:16px;overflow:hidden;display:grid;place-items:center}
+.cover .emoji{font-size:clamp(44px,9vw,72px);filter:drop-shadow(0 6px 14px rgba(0,0,0,.25));line-height:1}
+.cover .word{position:absolute;left:12px;right:12px;bottom:10px;color:#fff;font-weight:800;font-size:22px;line-height:1.05;letter-spacing:-.02em;text-shadow:0 2px 10px rgba(0,0,0,.35);word-break:break-word}
+.hover{position:absolute;inset:0;background:var(--overlay);opacity:0;display:flex;flex-direction:column;justify-content:space-between;padding:12px}
+.pin:hover .hover,.pin:focus-visible .hover{opacity:1}
+.save{align-self:flex-end;background:var(--red);color:#fff;font-weight:700;padding:12px 16px;border-radius:24px;font-size:15px}
+.save:hover{background:var(--red-hover)}
+.save.on{background:#111;color:#fff}
+.hover .cat{align-self:flex-start;background:rgba(255,255,255,.92);color:#111;font-size:13px;font-weight:600;padding:8px 12px;border-radius:20px}
+.meta{padding:8px 6px 0}
+.meta h3{margin:0;font-size:14px;font-weight:600;line-height:1.3}
+.meta p{margin:2px 0 0;font-size:12px;color:var(--muted)}
+.dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--red);margin-right:4px;vertical-align:1px}
+.empty{text-align:center;padding:64px 16px;color:var(--muted)}
+.empty strong{display:block;color:var(--text);font-size:20px;margin-bottom:6px}
+
+.scrim{position:fixed;inset:0;background:var(--scrim);z-index:20;display:none;align-items:center;justify-content:center;padding:16px}
+.scrim.open{display:flex}
+.closeup{background:var(--modal-bg);border-radius:32px;max-width:900px;width:100%;max-height:calc(100% - 32px);overflow:auto;display:grid;grid-template-columns:1fr 1fr;box-shadow:0 10px 40px rgba(0,0,0,.35)}
+.closeup .cover{border-radius:32px 0 0 32px;min-height:420px}
+.closeup .cover .emoji{font-size:110px}
+.side{padding:24px 28px;display:flex;flex-direction:column;gap:14px}
+.side .top{display:flex;justify-content:space-between;align-items:center}
+.iconbtn{width:44px;height:44px;border-radius:50%;display:grid;place-items:center}
+.iconbtn:hover{background:var(--surface)}
+.side h2{margin:0;font-size:32px;line-height:1.1;letter-spacing:-.02em;word-break:break-word}
+.side .sub{color:var(--muted);margin:0}
+.related h4{margin:8px 0 10px;font-size:16px}
+.mini{display:flex;flex-wrap:wrap;gap:8px}
+.mini button{display:flex;align-items:center;gap:6px;padding:8px 12px;border-radius:16px;background:var(--surface);font-size:14px;font-weight:600}
+.mini button:hover{background:var(--surface-2)}
+@media (max-width:700px){
+  .closeup{grid-template-columns:1fr;border-radius:24px}
+  .closeup .cover{border-radius:24px 24px 0 0;min-height:240px}
+  .side{padding:18px 20px 24px}
+  .navpill.hide-sm{display:none}
+}
+
+.menu{display:none;width:44px;height:44px;border-radius:50%;place-items:center;flex:none}
+.menu:hover{background:var(--surface)}
+.layout{flex:1;min-height:0;display:grid;grid-template-columns:270px minmax(0,1fr);gap:8px}
+.index{height:100%;min-height:0;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;padding:8px 8px 40px 16px;scrollbar-width:thin}
+.index h2{font-size:13px;color:var(--muted);font-weight:600;margin:4px 12px 8px}
+.ix-cat{display:flex;justify-content:space-between;align-items:center;width:100%;padding:10px 12px;border-radius:12px;font-weight:700;font-size:14px;text-align:left}
+.ix-cat:hover,.ix-cat.current{background:var(--surface)}
+.ix-cat .n{color:var(--muted);font-weight:500;font-size:12px}
+.ix-list{list-style:none;margin:0 0 10px 18px;padding:0 0 0 10px;border-left:2px solid var(--surface-2)}
+.ix-list button{display:flex;gap:8px;align-items:center;width:100%;padding:6px 10px;border-radius:10px;font-size:14px;text-align:left;color:var(--muted)}
+.ix-list button:hover{background:var(--surface);color:var(--text)}
+.ix-list .sv{margin-left:auto;width:8px;height:8px;border-radius:50%;background:var(--red);flex:none}
+.sect{scroll-margin-top:8px}
+.sep{display:flex;align-items:baseline;gap:10px;margin:8px 4px 14px;padding-top:20px;border-top:1px solid var(--surface-2);font-size:24px;letter-spacing:-.01em}
+.sect:first-child .sep{border-top:0;padding-top:0}
+.sep small{font-size:14px;color:var(--muted);font-weight:500}
+.drawer-scrim{display:none}
+@media (max-width:900px){
+  .layout{grid-template-columns:minmax(0,1fr)}
+  .menu{display:grid}
+  .index{position:fixed;top:0;left:0;bottom:0;height:auto;width:min(300px,85vw);z-index:15;background:var(--modal-bg);padding-top:calc(16px + env(safe-area-inset-top,0px));padding-bottom:calc(40px + env(safe-area-inset-bottom,0px));box-shadow:4px 0 24px rgba(0,0,0,.25);transform:translateX(-105%);visibility:hidden}
+  .index.open{transform:none;visibility:visible}
+  .drawer-scrim.open{display:block;position:fixed;inset:0;background:var(--scrim);z-index:14}
+}
+.tabbar{display:none}
+@media (max-width:600px){
+  .tabbar{display:flex;position:fixed;left:50%;transform:translateX(-50%);bottom:calc(12px + env(safe-area-inset-bottom,0px));background:var(--modal-bg);border-radius:32px;box-shadow:0 4px 18px rgba(0,0,0,.2);padding:6px 10px;gap:4px;z-index:8}
+  .tabbar button{width:56px;height:44px;border-radius:22px;display:grid;place-items:center}
+  .tabbar button[aria-pressed="true"]{background:var(--surface)}
+  header .navpill{display:none}
+}
+@media (prefers-reduced-motion:no-preference){
+  .hover{transition:opacity .15s}
+  .closeup{animation:pop .2s ease-out}
+  @keyframes pop{from{transform:scale(.96);opacity:0}to{transform:none;opacity:1}}
+}
+</style>
+</head>
+<body>
+<header>
+  <div class="bar">
+    <button class="menu" id="menuBtn" aria-label="Open index" aria-controls="index"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button>
+    <div class="logo" aria-hidden="true"><span>P</span></div>
+    <button class="navpill" data-view="all" aria-pressed="true">Home</button>
+    <button class="navpill hide-sm" data-view="saved" aria-pressed="false">Saved</button>
+    <label class="search">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><circle cx="10.5" cy="10.5" r="7"/><path d="m16 16 5.5 5.5"/></svg>
+      <input id="q" type="search" placeholder="Search your collections" aria-label="Search your collections" autocomplete="off">
+    </label>
+    <div class="avatar" title="Diego">D</div>
+  </div>
+  <nav class="chips" id="chips" aria-label="Categories"></nav>
+</header>
+
+<div class="layout">
+  <aside class="index" id="index" aria-label="Index of all collections"></aside>
+  <main>
+    <p class="intro" id="intro"></p>
+    <div id="grid"></div>
+  </main>
+</div>
+<div class="drawer-scrim" id="dscrim"></div>
+
+<nav class="tabbar" aria-label="Views">
+  <button data-view="all" aria-pressed="true" aria-label="Home"><svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M12 3 2 11h3v10h5v-6h4v6h5V11h3z"/></svg></button>
+  <button id="tabSearch" aria-label="Search"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6"><circle cx="10.5" cy="10.5" r="7"/><path d="m16 16 5.5 5.5"/></svg></button>
+  <button data-view="saved" aria-pressed="false" aria-label="Saved"><svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M6 2h12a1 1 0 0 1 1 1v19l-7-4-7 4V3a1 1 0 0 1 1-1z"/></svg></button>
+</nav>
+
+<div class="scrim" id="scrim" role="dialog" aria-modal="true" aria-labelledby="cuTitle">
+  <div class="closeup" id="closeup"></div>
+</div>
+
+<script>
+const DATA = {
+  "Science & Math": {c:["#1e3a8a","#7c3aed"], items:[["math-physics","🧮"],["Astro","🔭"],["Astrophysics","🌌"],["Quantum Mechanics","⚛️"],["Quant","📈"],["math art","🌀"],["data science","📊"],["data","🗄️"],["space","🚀"]]},
+  "Tech & Dev": {c:["#0f766e","#0ea5e9"], items:[["Dev","💻"],["computer-science","🖥️"],["cs","⌨️"],["ai","🤖"],["AI-books","📚"],["ui","🎛️"],["engineer","🛠️"],["ig","📱"]]},
+  "Art, Design & Architecture": {c:["#be185d","#f59e0b"], items:[["aheastetics","✨"],["design","📐"],["graphic styles","🖌️"],["graphics","🎨"],["CG Insane","🧊"],["art","🖼️"],["Drawning","✏️"],["Tatoo","🪡"],["comics","💥"],["Arch","🏛️"],["arch","🏗️"],["house","🏠"],["construction","🧱"]]},
+  "Music & Audio": {c:["#6d28d9","#ec4899"], items:[["Audio","🎧"],["music","🎵"],["Music","🎶"],["Techno","🔊"],["Music Theory","🎼"]]},
+  "Entertainment": {c:["#b91c1c","#f97316"], items:[["rick","🥒"],["Shows","📺"],["movie","🎬"],["movies","🍿"],["Standup Comedy","🎤"],["games","🎮"],["fun","🎈"],["crazy","🤪"],["watch-later","⏰"]]},
+  "Mind & Spirit": {c:["#4338ca","#14b8a6"], items:[["Consciousness","🧿"],["awake","👁️"],["Spirituality","🕉️"],["buddhism","☸️"],["Mindfulness","🧘"],["Resilience","🌱"],["motivation","🔥"],["Life","🌻"],["chill","🌊"]]},
+  "Health, Sports & Food": {c:["#15803d","#facc15"], items:[["Health","🩺"],["sports","🏅"],["rugby","🏉"],["cardio","🏃"],["Food","🍜"]]},
+  "Travel, Places & Nature": {c:["#0369a1","#22c55e"], items:[["trips","🧳"],["Trip","🗺️"],["berlin","🐻"],["Boats","🚤"],["Sail","⛵"],["Nature","🌿"]]},
+  "Culture, Society & Learning": {c:["#92400e","#e11d48"], items:[["society","👥"],["military","🪖"],["Deutsche","🇩🇪"],["books","📖"],["Poems","🪶"],["ed","🎓"]]},
+  "Work & Money": {c:["#1f2937","#10b981"], items:[["Job","💼"],["Fin","💰"]]},
+  "Other": {c:["#475569","#94a3b8"], items:[["Misc","📦"]]}
+};
+
+const boards = [];
+for (const [cat, {c, items}] of Object.entries(DATA)) {
+  items.forEach(([name, emoji], i) => boards.push({id: cat + "/" + name, name, emoji, cat, colors: c, i}));
+}
+function hash(s){let h=0;for(const ch of s)h=(h*31+ch.codePointAt(0))>>>0;return h}
+function coverStyle(b){
+  const h = hash(b.name), ang = h % 360, shift = (h % 50) - 25;
+  const ratio = [1, 1.25, 1.5, 0.85, 1.35, 1.1][h % 6];
+  return `aspect-ratio:1/${ratio};background:
+    radial-gradient(circle at ${20 + h%60}% ${15 + (h>>3)%50}%, rgba(255,255,255,.28), transparent 45%),
+    linear-gradient(${ang}deg, ${b.colors[0]}, ${b.colors[1]});filter:hue-rotate(${shift}deg)`;
+}
+
+let saved = new Set();
+try { saved = new Set(JSON.parse(localStorage.getItem("saved-boards") || "[]")); } catch(e) {}
+function persist(){ try { localStorage.setItem("saved-boards", JSON.stringify([...saved])); } catch(e) {} }
+
+let state = {cat:"All", view:"all", q:""};
+const $ = s => document.querySelector(s);
+const esc = s => s.replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+function renderChips(){
+  const cats = ["All", ...Object.keys(DATA)];
+  $("#chips").innerHTML = cats.map(c => `<button class="chip" aria-pressed="${state.cat===c}" data-cat="${esc(c)}">${esc(c)}</button>`).join("");
+}
+function visible(){
+  const q = state.q.trim().toLowerCase();
+  return boards.filter(b =>
+    (state.cat === "All" || b.cat === state.cat) &&
+    (state.view !== "saved" || saved.has(b.id)) &&
+    (!q || b.name.toLowerCase().includes(q) || b.cat.toLowerCase().includes(q)));
+}
+function pinHTML(b){
+  const on = saved.has(b.id);
+  return `<div class="pin" role="button" tabindex="0" data-id="${esc(b.id)}" aria-label="Open ${esc(b.name)}">
+    <div class="cover" style="${coverStyle(b)}">
+      <span class="emoji" aria-hidden="true">${b.emoji}</span>
+      <span class="word">${esc(b.name)}</span>
+      <div class="hover">
+        <button class="save ${on?"on":""}" data-save="${esc(b.id)}">${on?"Saved":"Save"}</button>
+        <span class="cat">${esc(b.cat)}</span>
+      </div>
+    </div>
+    <div class="meta"><h3>${esc(b.name)}</h3><p>${on?'<span class="dot"></span>':""}Private collection</p></div>
+  </div>`;
+}
+function render(){
+  const list = visible();
+  const label = state.view === "saved" ? "Saved" : state.cat === "All" ? "All collections" : state.cat;
+  $("#intro").textContent = `${label} · ${list.length} ${list.length === 1 ? "board" : "boards"}`;
+  const groups = Object.keys(DATA).map(cat => [cat, list.filter(b => b.cat === cat)]).filter(([, l]) => l.length);
+  $("#grid").innerHTML = list.length ? groups.map(([cat, l]) => `<section class="sect" id="${secId(cat)}" data-sec="${esc(cat)}"><h2 class="sep">${esc(cat)} <small>${l.length}</small></h2><div class="grid">${l.map(pinHTML).join("")}</div></section>`).join("") :
+    `<div class="empty"><strong>${state.view==="saved" ? "Nothing saved yet" : "No collections match"}</strong>${state.view==="saved" ? "Hover a board and tap Save to keep it here." : "Try another word or pick a different category."}</div>`;
+  document.querySelectorAll("[data-view]").forEach(b => b.setAttribute("aria-pressed", b.dataset.view === state.view));
+  renderIndex(); watch();
+}
+function toggleSave(id){
+  saved.has(id) ? saved.delete(id) : saved.add(id);
+  persist(); render();
+  if ($("#scrim").classList.contains("open")) openCloseup(id);
+}
+function openCloseup(id){
+  const b = boards.find(x => x.id === id); if (!b) return;
+  const on = saved.has(id);
+  const rel = boards.filter(x => x.cat === b.cat && x.id !== id);
+  $("#closeup").innerHTML = `
+    <div class="cover" style="${coverStyle(b)};aspect-ratio:auto">
+      <span class="emoji" aria-hidden="true">${b.emoji}</span>
+    </div>
+    <div class="side">
+      <div class="top">
+        <button class="iconbtn" id="cuClose" aria-label="Close"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6"><path d="M5 5l14 14M19 5 5 19"/></svg></button>
+        <button class="save ${on?"on":""}" data-save="${esc(id)}">${on?"Saved":"Save"}</button>
+      </div>
+      <h2 id="cuTitle">${esc(b.name)}</h2>
+      <p class="sub">${esc(b.cat)} · Private collection</p>
+      <div class="related">
+        <h4>More in ${esc(b.cat)}</h4>
+        <div class="mini">${rel.map(r => `<button data-open="${esc(r.id)}"><span aria-hidden="true">${r.emoji}</span>${esc(r.name)}</button>`).join("") || '<span class="sub">This is the only board here.</span>'}</div>
+      </div>
+    </div>`;
+  $("#scrim").classList.add("open");
+  $("#cuClose").focus();
+}
+function closeCloseup(){ $("#scrim").classList.remove("open"); }
+
+document.addEventListener("click", e => {
+  const s = e.target.closest("[data-save]"); if (s){ e.stopPropagation(); toggleSave(s.dataset.save); return; }
+  const j = e.target.closest("[data-jump]"); if (j){ jumpTo(j.dataset.jump); return; }
+  const o = e.target.closest("[data-open]"); if (o){ closeDrawer(); openCloseup(o.dataset.open); return; }
+  if (e.target.id === "dscrim") { closeDrawer(); return; }
+  const p = e.target.closest(".pin"); if (p){ openCloseup(p.dataset.id); return; }
+  const c = e.target.closest("[data-cat]"); if (c){ state.cat = c.dataset.cat; renderChips(); render(); return; }
+  const v = e.target.closest("[data-view]"); if (v){ state.view = v.dataset.view; render(); document.querySelector("main").scrollTo({top:0}); return; }
+  if (e.target.id === "scrim") closeCloseup();
+});
+document.addEventListener("keydown", e => {
+  if (e.key === "Escape") { closeCloseup(); closeDrawer(); }
+  if ((e.key === "Enter" || e.key === " ") && e.target.classList?.contains("pin")) { e.preventDefault(); openCloseup(e.target.dataset.id); }
+});
+$("#q").addEventListener("input", e => { state.q = e.target.value; render(); });
+$("#tabSearch").addEventListener("click", () => { document.querySelector("main").scrollTo({top:0}); $("#q").focus(); });
+
+function secId(c){ return "sec-" + c.toLowerCase().replace(/[^a-z0-9]+/g, "-"); }
+function renderIndex(){
+  const nSaved = saved.size;
+  $("#index").innerHTML = `<h2>${boards.length} boards in ${Object.keys(DATA).length} categories${nSaved ? `, ${nSaved} saved` : ""}</h2>` +
+    Object.keys(DATA).map(cat => {
+      const l = boards.filter(b => b.cat === cat);
+      return `<button class="ix-cat" data-jump="${esc(cat)}"><span>${esc(cat)}</span><span class="n">${l.length}</span></button>
+        <ul class="ix-list">${l.map(b => `<li><button data-open="${esc(b.id)}"><span aria-hidden="true">${b.emoji}</span>${esc(b.name)}${saved.has(b.id) ? '<span class="sv" title="Saved"></span>' : ""}</button></li>`).join("")}</ul>`;
+    }).join("");
+}
+function jumpTo(cat){
+  let el = document.getElementById(secId(cat));
+  if (!el) { state = {cat:"All", view:"all", q:""}; $("#q").value = ""; renderChips(); render(); el = document.getElementById(secId(cat)); }
+  closeDrawer();
+  el?.scrollIntoView({behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth"});
+}
+let io;
+function watch(){
+  io?.disconnect();
+  if (!("IntersectionObserver" in window)) return;
+  io = new IntersectionObserver(es => es.forEach(en => {
+    if (en.isIntersecting) document.querySelectorAll(".ix-cat").forEach(b => b.classList.toggle("current", b.dataset.jump === en.target.dataset.sec));
+  }), {rootMargin:"-25% 0px -65% 0px"});
+  document.querySelectorAll(".sect").forEach(s => io.observe(s));
+}
+function openDrawer(){ $("#index").classList.add("open"); $("#dscrim").classList.add("open"); }
+function closeDrawer(){ $("#index").classList.remove("open"); $("#dscrim").classList.remove("open"); }
+$("#menuBtn").addEventListener("click", openDrawer);
+function setHH(){ document.documentElement.style.setProperty("--hh", $("header").offsetHeight + "px"); }
+addEventListener("resize", setHH);
+
+renderChips(); render(); setHH();
+</script>
+</body>
+</html>
