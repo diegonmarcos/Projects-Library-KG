@@ -20,7 +20,7 @@ jobs:
           enablement: true
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: dist
+          path: Chronos
   deploy:
     environment:
       name: github-pages
