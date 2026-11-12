@@ -1,6 +1,8 @@
-# HardTech-Chronos
+# Projects-Library-KG
 
-Interactive HTML simulators of cycles across scales. Live: https://diegonmarcos.github.io/HardTech-Chronos/
+(Renamed from HardTech-Chronos, #1609. The Library board is the root index.html; the Chronos site is Chronos/.)
+
+Interactive HTML simulators of cycles across scales. Live: https://diegonmarcos.github.io/Projects-Library-KG/
 
 | # | Project | Path |
 |---|---|---|
